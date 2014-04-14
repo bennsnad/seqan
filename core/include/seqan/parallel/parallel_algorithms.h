@@ -112,9 +112,9 @@ template <typename TSequence>
 inline typename Value<TSequence>::Type
 sum(TSequence const &seq, Serial)
 {
-    register typename Iterator<TSequence const>::Type it = begin(seq, Standard());
-    register typename Iterator<TSequence const>::Type itEnd = end(seq, Standard());
-    register typename Value<TSequence>::Type sum = 0;
+    typename Iterator<TSequence const>::Type it = begin(seq, Standard());
+    typename Iterator<TSequence const>::Type itEnd = end(seq, Standard());
+    typename Value<TSequence>::Type sum = 0;
     for (; it != itEnd; ++it)
         sum += *it;
     return sum;
@@ -126,7 +126,7 @@ sum(TSequence const &seq, Tag<TParallelTag> parallelTag)
 {
     Splitter<typename Size<TSequence>::Type> splitter(0, length(seq), parallelTag);
 
-    register typename Value<TSequence>::Type threadSum = 0;
+    typename Value<TSequence>::Type threadSum = 0;
     SEQAN_OMP_PRAGMA(parallel for reduction(+:threadSum))
     for (int job = 0; job < (int)length(splitter); ++job)
         threadSum += sum(infix(seq, splitter[job], splitter[job + 1]), Serial());
@@ -218,10 +218,10 @@ partialSum(TTarget &target, TSource const &source, Tag<TParallelTag> parallelTag
     SEQAN_OMP_PRAGMA(parallel for)
     for (int job = 0; job < (int)length(splitter); ++job)
     {
-        register TConstIterator it = begin(source, Standard()) + splitter[job];
-        register TConstIterator itEnd = begin(source, Standard()) + splitter[job + 1];
-        register TIterator dstIt = begin(target, Standard()) + splitter[job];
-        register TValue sum = localSums[job];
+        TConstIterator it = begin(source, Standard()) + splitter[job];
+        TConstIterator itEnd = begin(source, Standard()) + splitter[job + 1];
+        TIterator dstIt = begin(target, Standard()) + splitter[job];
+        TValue sum = localSums[job];
         for (; it != itEnd; ++it, ++dstIt)
         {
             sum += *it;
@@ -306,6 +306,10 @@ inline void iterate(TContainer & c, TFunctor f)
 // STL Wrappers
 // ============================================================================
 
+// ----------------------------------------------------------------------------
+// Function forEach()
+// ----------------------------------------------------------------------------
+
 template <typename TContainer, typename TFunctor, typename TParallelTag>
 inline TFunctor
 forEach(TContainer & c, TFunctor f, Tag<TParallelTag> const & /* tag */)
@@ -327,7 +331,7 @@ forEach(TContainer const & c, TFunctor f, Tag<TParallelTag> const & /* tag */)
 template <typename TTarget, typename TSource, typename TUnaryOperator, typename TParallelTag>
 inline void transform(TTarget & target, TSource & source, TUnaryOperator o, Tag<TParallelTag> const & /* tag */)
 {
-    resize(target, length(source), Exact());
+    SEQAN_ASSERT_GEQ(length(target), length(source));
     std::transform(begin(source, Standard()), end(source, Standard()), begin(target, Standard()), o);
 }
 
@@ -357,6 +361,42 @@ inline typename Difference<TContainer>::Type
 countIf(TContainer const & c, TUnaryPredicate p, Tag<TParallelTag> const & /* tag */)
 {
     return std::count_if(begin(c, Standard()), end(c, Standard()), p);
+}
+
+// ----------------------------------------------------------------------------
+// Function maxElement()
+// ----------------------------------------------------------------------------
+
+template <typename TContainer, typename TUnaryPredicate, typename TParallelTag>
+inline typename Reference<TContainer const>::Type
+maxElement(TContainer const & c, TUnaryPredicate p, Tag<TParallelTag> const & /* tag */)
+{
+    return value(std::max_element(begin(c, Standard()), end(c, Standard()), p));
+}
+
+template <typename TContainer, typename TParallelTag>
+inline typename Reference<TContainer const>::Type
+maxElement(TContainer const & c, Tag<TParallelTag> const & /* tag */)
+{
+    return value(std::max_element(begin(c, Standard()), end(c, Standard())));
+}
+
+// ----------------------------------------------------------------------------
+// Function minElement()
+// ----------------------------------------------------------------------------
+
+template <typename TContainer, typename TUnaryPredicate, typename TParallelTag>
+inline typename Reference<TContainer const>::Type
+minElement(TContainer const & c, TUnaryPredicate p, Tag<TParallelTag> const & /* tag */)
+{
+    return value(std::min_element(begin(c, Standard()), end(c, Standard()), p));
+}
+
+template <typename TContainer, typename TParallelTag>
+inline typename Reference<TContainer const>::Type
+minElement(TContainer const & c, Tag<TParallelTag> const & /* tag */)
+{
+    return value(std::min_element(begin(c, Standard()), end(c, Standard())));
 }
 
 // ----------------------------------------------------------------------------
@@ -421,7 +461,7 @@ inline TFunctor forEach(TContainer const & c, TFunctor f, Parallel)
 template <typename TTarget, typename TSource, typename TUnaryOperator>
 inline void transform(TTarget & target, TSource & source, TUnaryOperator o, Parallel)
 {
-    resize(target, length(source), Exact());
+    SEQAN_ASSERT_GEQ(length(target), length(source));
     __gnu_parallel::transform(begin(source, Standard()), end(source, Standard()), begin(target, Standard()), o);
 }
 
@@ -445,6 +485,42 @@ inline typename Difference<TContainer>::Type
 countIf(TContainer const & c, TUnaryPredicate p, Parallel)
 {
     return __gnu_parallel::count_if(begin(c, Standard()), end(c, Standard()), p);
+}
+
+// ----------------------------------------------------------------------------
+// Function maxElement(Parallel)
+// ----------------------------------------------------------------------------
+
+template <typename TContainer, typename TUnaryPredicate>
+inline typename Reference<TContainer const>::Type
+maxElement(TContainer const & c, TUnaryPredicate p, Parallel)
+{
+    return value(__gnu_parallel::max_element(begin(c, Standard()), end(c, Standard()), p));
+}
+
+template <typename TContainer>
+inline typename Reference<TContainer const>::Type
+maxElement(TContainer const & c, Parallel)
+{
+    return value(__gnu_parallel::max_element(begin(c, Standard()), end(c, Standard())));
+}
+
+// ----------------------------------------------------------------------------
+// Function minElement(Parallel)
+// ----------------------------------------------------------------------------
+
+template <typename TContainer, typename TUnaryPredicate>
+inline typename Reference<TContainer const>::Type
+minElement(TContainer const & c, TUnaryPredicate p, Parallel)
+{
+    return value(__gnu_parallel::min_element(begin(c, Standard()), end(c, Standard()), p));
+}
+
+template <typename TContainer>
+inline typename Reference<TContainer const>::Type
+minElement(TContainer const & c, Parallel)
+{
+    return value(__gnu_parallel::min_element(begin(c, Standard()), end(c, Standard())));
 }
 
 // ----------------------------------------------------------------------------
@@ -537,6 +613,42 @@ inline typename Difference<TContainer>::Type
 countIf(TContainer const & c, TUnaryPredicate p)
 {
     return countIf(c, p, Serial());
+}
+
+// ----------------------------------------------------------------------------
+// Function maxElement()
+// ----------------------------------------------------------------------------
+
+template <typename TContainer, typename TUnaryPredicate>
+inline typename Reference<TContainer const>::Type
+maxElement(TContainer const & c, TUnaryPredicate p)
+{
+    return maxElement(c, p, Serial());
+}
+
+template <typename TContainer>
+inline typename Reference<TContainer const>::Type
+maxElement(TContainer const & c)
+{
+    return maxElement(c, Serial());
+}
+
+// ----------------------------------------------------------------------------
+// Function minElement()
+// ----------------------------------------------------------------------------
+
+template <typename TContainer, typename TUnaryPredicate>
+inline typename Reference<TContainer const>::Type
+minElement(TContainer const & c, TUnaryPredicate p)
+{
+    return minElement(c, p, Serial());
+}
+
+template <typename TContainer>
+inline typename Reference<TContainer const>::Type
+minElement(TContainer const & c)
+{
+    return minElement(c, Serial());
 }
 
 // ----------------------------------------------------------------------------

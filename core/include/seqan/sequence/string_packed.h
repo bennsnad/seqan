@@ -461,14 +461,14 @@ struct Size<String<TValue, Packed<THostspec> > const>
 // Metafunction Iterator
 // --------------------------------------------------------------------------
 
-template <typename TValue, typename THostspec, typename TSpec>
-struct Iterator<String<TValue, Packed<THostspec> >, TSpec>
+template <typename TValue, typename THostspec>
+struct Iterator<String<TValue, Packed<THostspec> >, Standard>
 {
     typedef Iter<String<TValue, Packed<THostspec> >, Packed<THostspec> > Type;
 };
 
-template <typename TValue, typename THostspec, typename TSpec>
-struct Iterator<String<TValue, Packed<THostspec> > const, TSpec>
+template <typename TValue, typename THostspec>
+struct Iterator<String<TValue, Packed<THostspec> > const, Standard>
 {
     typedef Iter<String<TValue, Packed<THostspec> > const, Packed<THostspec> > Type;
 };
@@ -686,23 +686,23 @@ getObjectId(String<TValue, Packed<THostspec> > const & me)
 // Function iter()
 // --------------------------------------------------------------------------
 
-template <typename TValue, typename THostspec, typename TPos, typename TTag>
-inline typename Iterator<String<TValue, Packed<THostspec> >, Tag<TTag> const>::Type 
+template <typename TValue, typename THostspec, typename TPos>
+inline typename Iterator<String<TValue, Packed<THostspec> >, Standard>::Type
 iter(String<TValue, Packed<THostspec> > & me,
      TPos pos,
-     Tag<TTag> const &)
+     Standard)
 {
-    typedef typename Iterator<String<TValue, Packed<THostspec> >, Tag<TTag> const>::Type TIterator;
+    typedef typename Iterator<String<TValue, Packed<THostspec> >, Standard>::Type TIterator;
     return TIterator(me, pos);
 }
 
-template <typename TValue, typename THostspec, typename TPos, typename TTag>
-inline typename Iterator<String<TValue, Packed<THostspec> > const, Tag<TTag> const>::Type 
+template <typename TValue, typename THostspec, typename TPos>
+inline typename Iterator<String<TValue, Packed<THostspec> > const, Standard>::Type
 iter(String<TValue, Packed<THostspec> > const & me,
      TPos pos,
-     Tag<TTag> const &)
+     Standard)
 {
-    typedef typename Iterator<String<TValue, Packed<THostspec> > const, Tag<TTag> const>::Type TIterator;
+    typedef typename Iterator<String<TValue, Packed<THostspec> > const, Standard>::Type TIterator;
     return TIterator(me, pos);
 }
 
@@ -710,21 +710,21 @@ iter(String<TValue, Packed<THostspec> > const & me,
 // Function begin()
 // --------------------------------------------------------------------------
 
-template <typename TValue, typename THostspec, typename TTag>
-inline typename Iterator<String<TValue, Packed<THostspec> >, Tag<TTag> const>::Type 
+template <typename TValue, typename THostspec>
+inline typename Iterator<String<TValue, Packed<THostspec> >, Standard>::Type
 begin(String<TValue, Packed<THostspec> > & me,
-      Tag<TTag> const &)
+      Standard)
 {
-    typedef typename Iterator<String<TValue, Packed<THostspec> >, Tag<TTag> const>::Type TIterator;
+    typedef typename Iterator<String<TValue, Packed<THostspec> >, Standard>::Type TIterator;
     return TIterator(me);
 }
 
-template <typename TValue, typename THostspec, typename TTag>
-inline typename Iterator<String<TValue, Packed<THostspec> > const, Tag<TTag> const>::Type 
+template <typename TValue, typename THostspec>
+inline typename Iterator<String<TValue, Packed<THostspec> > const, Standard>::Type
 begin(String<TValue, Packed<THostspec> > const & me,
-      Tag<TTag> const &)
+      Standard)
 {
-    typedef typename Iterator<String<TValue, Packed<THostspec> > const, Tag<TTag> const>::Type TIterator;
+    typedef typename Iterator<String<TValue, Packed<THostspec> > const, Standard>::Type TIterator;
     return TIterator(me);
 }
 
@@ -732,20 +732,20 @@ begin(String<TValue, Packed<THostspec> > const & me,
 // Function end()
 // --------------------------------------------------------------------------
 
-template <typename TValue, typename THostspec, typename TTag>
-inline typename Iterator<String<TValue, Packed<THostspec> >, Tag<TTag> const>::Type
+template <typename TValue, typename THostspec>
+inline typename Iterator<String<TValue, Packed<THostspec> >, Standard>::Type
 end(String<TValue, Packed<THostspec> > & me,
-    Tag<TTag> const & tag_)
+    Standard)
 {
-    return iter(me, length(me), tag_);
+    return iter(me, length(me), Standard());
 }
 
-template <typename TValue, typename THostspec, typename TTag>
-inline typename Iterator<String<TValue, Packed<THostspec> > const, Tag<TTag> const>::Type 
+template <typename TValue, typename THostspec>
+inline typename Iterator<String<TValue, Packed<THostspec> > const, Standard>::Type
 end(String<TValue, Packed<THostspec> > const & me,
-    Tag<TTag> const & tag_)
+    Standard)
 {
-    return iter(me, length(me), tag_);
+    return iter(me, length(me), Standard());
 }
 
 // --------------------------------------------------------------------------
@@ -873,22 +873,22 @@ arrayCopyForward(Iter<TPackedString, Packed<TSpec> > source_begin,
         }
 
         // now copy whole words
-        register int leftShift = source_begin.localPos;
+        int leftShift = source_begin.localPos;
         if (leftShift != 0)
         {
             THostIter source_lastWord = hostIterator(source_end);
             if (source_end.localPos < source_begin.localPos)
                 --source_lastWord;
 
-            register typename THostValue::TBitVector prevWord = hostIterator(source_begin)->i;
-            register int rightShift = TTraits::VALUES_PER_HOST_VALUE - leftShift;
+            typename THostValue::TBitVector prevWord = hostIterator(source_begin)->i;
+            int rightShift = TTraits::VALUES_PER_HOST_VALUE - leftShift;
             leftShift *= TTraits::BITS_PER_VALUE;
             rightShift *= TTraits::BITS_PER_VALUE;
             for (; hostIterator(source_begin) != source_lastWord; ++hostIterator(target_begin))
             {
                 // words must be shifted and or'ed (BB|CCCC in the figure)
                 ++hostIterator(source_begin);
-                register typename THostValue::TBitVector curWord = hostIterator(source_begin)->i;
+                typename THostValue::TBitVector curWord = hostIterator(source_begin)->i;
                 hostIterator(target_begin)->i = (prevWord << leftShift) | (curWord >> rightShift);
                 prevWord = curWord;
             }
@@ -955,11 +955,11 @@ arrayCopyBackward(Iter<TPackedString, Packed<TSpec> > source_begin,
         }
 
         // now copy whole words
-        register int leftShift = source_end.localPos;
+        int leftShift = source_end.localPos;
         if (leftShift != 0)
         {
-            register typename THostValue::TBitVector prevWord = hostIterator(source_end)->i;
-            register int rightShift = TTraits::VALUES_PER_HOST_VALUE - leftShift;
+            typename THostValue::TBitVector prevWord = hostIterator(source_end)->i;
+            int rightShift = TTraits::VALUES_PER_HOST_VALUE - leftShift;
             leftShift *= TTraits::BITS_PER_VALUE;
             rightShift *= TTraits::BITS_PER_VALUE;
             while (hostIterator(target_begin) != target_firstWord)
@@ -968,7 +968,7 @@ arrayCopyBackward(Iter<TPackedString, Packed<TSpec> > source_begin,
                 --hostIterator(target_begin);
 
                 // words must be shifted and or'ed (BB|CCCC in the figure)
-                register typename THostValue::TBitVector curWord = hostIterator(source_end)->i;
+                typename THostValue::TBitVector curWord = hostIterator(source_end)->i;
                 hostIterator(target_begin)->i = (curWord << leftShift) | (prevWord >> rightShift);
                 prevWord = curWord;
             }
@@ -1964,6 +1964,26 @@ testAllOnes(String<bool, Packed<THostSpec> > const & obj)
 
     return _packedStringTestAll(obj, FunctorTestAllOnes<TPackedString>((TPackedTraits::VALUES_PER_HOST_VALUE -
                                      (length(obj) % TPackedTraits::VALUES_PER_HOST_VALUE))));
+}
+
+// ----------------------------------------------------------------------------
+// Function open()
+// ----------------------------------------------------------------------------
+
+template <typename TValue, typename THostspec>
+inline bool open(String<TValue, Packed<THostspec> > & me, const char *fileName, int openMode)
+{
+    return open(host(me), fileName, openMode);
+}
+
+// ----------------------------------------------------------------------------
+// Function save()
+// ----------------------------------------------------------------------------
+
+template <typename TValue, typename THostspec>
+inline bool save(String<TValue, Packed<THostspec> > const & me, const char *fileName, int openMode)
+{
+    return save(host(me), fileName, openMode);
 }
 
 }  // namespace seqan
